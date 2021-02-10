@@ -6,6 +6,7 @@ class Node {
     constructor(value, edges=[]) {
         this.value = value;
         this.placeholder = this.getPlaceholder(value);
+        this.title = this.getTitle(value);
         this.edges = edges;
 
         // other attributes
@@ -14,6 +15,7 @@ class Node {
         this.visible = false;
         this.htmlText = null;
         this.visualLinks = [];
+        this.visuallyConnected = new Set();
         this.center = {"x": 0, "y": 0}
     }
 
@@ -39,6 +41,19 @@ class Node {
 
         return result;
     }
+
+    /**
+    * @param value: The text that we are building a title for
+    */
+    getTitle(value) {
+        let tokens = value.split(" ");
+        tokens = tokens.map( (tok) => {
+            return tok.length;
+        });
+
+        return tokens.join(" ");
+    }
+
     /**
     * No params
     */
@@ -87,6 +102,7 @@ const guessInput = document.getElementById("guessInput");
 const gameWrapper = document.getElementById("gameWrapper");
 const gameSvg = document.getElementById("gameSvg");
 const displayPanel = document.getElementById("displayPanel");
+const guessPanel = document.getElementById("guessPanelWrapper");
 const transformLayer = document.getElementById("transformLayer");
 
 const SVG_WIDTH = window.innerWidth;
@@ -200,24 +216,40 @@ function selectNode(node) {
 }
 
 function submitGuess(guess) {
-    if (nodeMap.has(guess)) {
+    const p = document.createElement("p");
+
+    const guessedNode = nodeMap.get(guess);
+    if (guessedNode && guessedNode.visible) {
         // we reveal the node and add its children to the gui
-        const guessedNode = nodeMap.get(guess);
         guessedNode.found = true;
         guessedNode.htmlText.innerHTML = guessedNode.value;
         guessedNode.edges.forEach( (edge) => {
             if (!edge.visible) {
                 addNodeToGui(edge);
+            }
+            if (!guessedNode.visuallyConnected.has(edge.value)) {
                 addConnectionToGui(guessedNode, edge);
             }
         });
+
+        // set guess text
+        p.innerText = guessedNode.value + ": yep!";
 
         //update display panel
         deselectNode(currentNode);
         selectNode(currentNode);
     } else {
-        console.log("guess is bad")
+        // set guess text
+        p.innerText = guess + ": nope";
+        p.className = "incorrect";
     }
+
+    // manage length
+    if (guessPanel.childElementCount === 10) {
+        guessPanel.removeChild(guessPanel.lastElementChild);
+    }
+    
+    guessPanel.prepend(p);
 }
 
 // creates and returns node, plus handles the overhead of adding to nodeMap
@@ -253,7 +285,9 @@ function addConnectionToGui(node1, node2) {
     // add link to gui and store it in each node
     transformLayer.prepend(line);
     node1.visualLinks.push(line);
+    node1.visuallyConnected.add(node2.value);
     node2.visualLinks.push(line);
+    node2.visuallyConnected.add(node1.value);
 }
 
 // populates the graph with nodes
@@ -287,7 +321,7 @@ function populateGraph() {
     });
 
     // add some children of the 'Bao' node
-    const baoChildren = ["Boardgames", "Bow"];
+    const baoChildren = ["Board Games", "Bow"];
     const b = nodeMap.get("bao");
     baoChildren.forEach((child) => {
         const n = createNode(child);
@@ -301,6 +335,11 @@ function populateGraph() {
         const n = createNode(child);
         createConnection(n, u);
     });
+
+    // add a chess linnk between "boardgames" and "beth harmon"
+    const chess = createNode("Chess");
+    createConnection(chess, nodeMap.get("Board Games"));
+    createConnection(chess, nodeMap.get("Beth Harmon"))
 }
 
 // compares the provided x,y coordinates to the graph to see if the space is occupied
@@ -343,7 +382,7 @@ function addNodeToGui(node) {
 
     // add sub-components to new svg element
     let title = document.createElementNS("http://www.w3.org/2000/svg", "title");
-    title.innerHTML = node.text();
+    title.innerHTML = node.title;
 
     let circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
     circle.setAttribute("r", CIRCLE_RADIUS);
