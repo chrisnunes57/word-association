@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500&display=swap');
+
+body {
+    font-family: 'Rubik', sans-serif;
+    overflow: hidden;
+    background-color: #f5f3ed;
+}
+
+.node {
+    cursor: pointer;
+}
+
+.node.parent circle{
+    fill: #E26D5A;
+    stroke: #c45d4d;
+}
+
+.node circle {
+    fill: #C2DAF4;
+    stroke: #a5c9f0;
+    stroke-width: 2px;
+}
+
+.node text {
+    text-anchor: middle;
+    font: 1.1em sans-serif;
+    font-family: 'Rubik', sans-serif;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, .2);
+}
+
+.link {
+    stroke: #000;
+    stroke-opacity: 0.1;
+    stroke-width: 2px;
+}
+
+.link.active {
+    stroke: #E26D5A;
+    stroke-opacity: 0.5;
+    stroke-width: 3px;
+}
+
+#displayPanel {
+    width: 200px;
+    height: 400px;
+    position: absolute;
+    margin: auto;
+    top: 30px;
+    right: 30px;
+    border-radius: 5px;
+    background-color: #303036;
+    padding-left: 20px;
+    color: white;
+}
+
+#displayPanel p {
+    margin-left: 20px;
+    cursor: pointer;
+}
+
+#displayPanel .title {
+    margin-left: 0;
+    font-weight: 500;
+}
+
+#guessPanel {
+    width: 200px;
+    height: 400px;
+    position: absolute;
+    margin: auto;
+    top: 30px;
+    left: 30px;
+    border-radius: 5px;
+    background-color: #303036;
+    padding: 20px;
+    color: white;
+}
+
+#guessPanel input {
+    display: block;
+    border-radius: 5px;
+    padding: 4px;
+    margin-bottom: 8px;
+}
+
+#transformLayer {
+    cursor: grab;
+    pointer-events: all;
+}
+
+#transformLayer rect {
+    width: 100%;
+    height: 100%;
+    fill: transparent;
+}

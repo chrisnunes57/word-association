@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+
+        <title>Word Association</title>
+        <meta name="description" content="A word association game in the form of a graph!">
+        <meta name="author" content="Chris Nunes">
+
+        <link rel="stylesheet" href="styles.css">
+    </head>
+
+    <body>
+        <div id="gameWrapper">
+            <div id="guessPanel">
+                <input id="guessInput" type="text" name="guess" />
+                <label for="guess">Type a guess and hit enter</label>
+                <p>Controls: Drag the graph around, or zoom in/out to see it better!</p>
+                <p>Click on different words to see what they're connected to!</p>
+            </div>
+            <div id="displayPanel"></div>
+            <svg id="gameSvg" width="600", height="600">
+                <g id="transformLayer">
+                    <rect />
+                </g>
+            </svg>
+        </div>
+        <script src="app.js"></script>
+    </body>
+</html>
