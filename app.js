@@ -33,8 +33,8 @@ class Node {
     getPlaceholder(value) {
         let result = "";
         for (let i = 0; i < value.length; i++) {
-            if (value[i] === " ") {
-                result += " ";
+            if (!isAlphaNumeric(value[i])) {
+                result += value[i];
             } else {
                 result += "●";
             }
@@ -163,6 +163,21 @@ transformLayer.onwheel = (e) => {
 
 // FUNCTIONS
 // helper methods!
+
+// straight from the overflow https://stackoverflow.com/a/25352300
+function isAlphaNumeric(str) {
+    let code, i, len;
+
+    for (i = 0, len = str.length; i < len; i++) {
+        code = str.charCodeAt(i);
+        if (!(code > 47 && code < 58) && // numeric (0-9)
+            !(code > 64 && code < 91) && // upper alpha (A-Z)
+            !(code > 96 && code < 123)) { // lower alpha (a-z)
+            return false;
+        }
+    }
+    return true;
+};
 
 function handleScreenDrag(e) {
     transformLayer.x = e.clientX - transformLayer.xOffset;
@@ -354,7 +369,7 @@ function populateGraph() {
 
     // make board games a parent and give it other children
     // add some children of the 'Bao' node
-    const boardGameChildren = ["Hey, That's My fish!", "Backgammon", "Catan", "Bananagrams", "Ticket to Ride"];
+    const boardGameChildren = ["Hey, That's My Fish!", "Backgammon", "Catan", "Bananagrams", "Ticket to Ride"];
     const bg = nodeMap.get("board games");
     bg.parent = true;
     boardGameChildren.forEach((child) => {
@@ -445,7 +460,7 @@ function assignPositions() {
             "x": x,
             "y": y
         }
-    })
+    });
 }
 
 function setup() {
