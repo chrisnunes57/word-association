@@ -12,6 +12,7 @@ class Node {
         // other attributes
         this.found = false;
         this.parent = false;
+        this.startingNode = false;
         this.visible = false;
         this.htmlText = null;
         this.visualLinks = [];
@@ -151,8 +152,8 @@ transformLayer.onmouseup = (e) => {
 transformLayer.onwheel = (e) => {
     e.preventDefault();
     transformLayer.scale += e.deltaY * -0.001;
-    transformLayer.x += e.deltaY;
-    transformLayer.y += e.deltaY;
+    transformLayer.x += e.deltaY * 0.735;
+    transformLayer.y += e.deltaY * 0.5;
     // Restrict scale
     transformLayer.scale = Math.min(Math.max(.3, transformLayer.scale), 2);
 
@@ -219,18 +220,12 @@ function submitGuess(guess) {
     const p = document.createElement("p");
 
     const guessedNode = nodeMap.get(guess);
-    if (guessedNode && guessedNode.visible) {
+    // three cases: we have already found it, this is a new find, or it is a wrong guess
+    if (guessedNode && guessedNode.found) {
+        p.innerText = guessedNode.value + ": already found";
+    } else if (guessedNode && guessedNode.visible) {
         // we reveal the node and add its children to the gui
-        guessedNode.found = true;
-        guessedNode.htmlText.innerHTML = guessedNode.value;
-        guessedNode.edges.forEach( (edge) => {
-            if (!edge.visible) {
-                addNodeToGui(edge);
-            }
-            if (!guessedNode.visuallyConnected.has(edge.value)) {
-                addConnectionToGui(guessedNode, edge);
-            }
-        });
+        revealNode(guessedNode);
 
         // set guess text
         p.innerText = guessedNode.value + ": yep!";
@@ -250,6 +245,20 @@ function submitGuess(guess) {
     }
     
     guessPanel.prepend(p);
+}
+
+// reveals a node and its connections
+function revealNode(node) {
+    node.found = true;
+    node.htmlText.innerHTML = node.value;
+    node.edges.forEach((edge) => {
+        if (!edge.visible) {
+            addNodeToGui(edge);
+        }
+        if (!node.visuallyConnected.has(edge.value)) {
+            addConnectionToGui(node, edge);
+        }
+    });
 }
 
 // creates and returns node, plus handles the overhead of adding to nodeMap
@@ -294,9 +303,11 @@ function addConnectionToGui(node1, node2) {
 function populateGraph() {
     // generate one main node
     const mainNode = createNode("Pixar Animations", true);
+    mainNode.startingNode = true;
 
     // generate another main node
     const elizabethNode = createNode("Elizabeth", true)
+    elizabethNode.startingNode = true;
 
     // add children of elizabeth node
     const elizabethChildren = ["Elizabeth Warren", "Lana Del Rey", "Queen Elizabeth", "Elizabeth Swann", "Beth Harmon"];
@@ -339,7 +350,22 @@ function populateGraph() {
     // add a chess linnk between "boardgames" and "beth harmon"
     const chess = createNode("Chess");
     createConnection(chess, nodeMap.get("Board Games"));
-    createConnection(chess, nodeMap.get("Beth Harmon"))
+    createConnection(chess, nodeMap.get("Beth Harmon"));
+
+    // make board games a parent and give it other children
+    // add some children of the 'Bao' node
+    const boardGameChildren = ["Hey, That's My fish!", "Backgammon", "Catan", "Bananagrams", "Ticket to Ride"];
+    const bg = nodeMap.get("board games");
+    bg.parent = true;
+    boardGameChildren.forEach((child) => {
+        const n = createNode(child);
+        createConnection(n, bg);
+    });
+
+    // create a king, connect it to chess and lana del rey
+    const king = createNode("King");
+    createConnection(king, nodeMap.get("lana del rey"));
+    createConnection(king, nodeMap.get("Chess"));
 }
 
 // compares the provided x,y coordinates to the graph to see if the space is occupied
@@ -370,12 +396,12 @@ function addNodeToGui(node) {
     let g = document.createElementNS("http://www.w3.org/2000/svg", "g");
     g.setAttribute("class", node.parent ? "node parent" : "node");
 
-    let x = 75 + Math.random() * (SVG_WIDTH - 150);
-    let y = 75 + Math.random() * (SVG_HEIGHT - 150);
+    let x = 270 + Math.random() * (SVG_WIDTH - 520);
+    let y = 270 + Math.random() * (SVG_HEIGHT - 520);
 
     while (spaceTaken(x, y, node.value)) {
-        x = 75 + Math.random() * (SVG_WIDTH - 150);
-        y = 75 + Math.random() * (SVG_HEIGHT - 150);
+        x = 270 + Math.random() * (SVG_WIDTH - 520);
+        y = 270 + Math.random() * (SVG_HEIGHT - 520);
     }
 
     g.setAttribute("transform", `translate(${x}, ${y})`);
@@ -425,7 +451,7 @@ function setup() {
 
     // do an initial draw of our parent nodes and their edges
     nodeMap.nodes.forEach( (node, key, map) => {
-        if (node.parent) {
+        if (node.startingNode) {
             // add node and children
             addNodeToGui(node);
             node.edges.forEach( (edge) => {

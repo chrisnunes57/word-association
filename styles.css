@@ -6,6 +6,12 @@ body {
     background-color: #f5f3ed;
 }
 
+p {
+    backface-visibility: hidden;
+    transform: translateZ(0);
+    -webkit-font-smoothing: subpixel-antialiased;
+}
+
 .node {
     cursor: pointer;
 }
