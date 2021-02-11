@@ -381,6 +381,11 @@ function populateGraph() {
     const king = createNode("King");
     createConnection(king, nodeMap.get("lana del rey"));
     createConnection(king, nodeMap.get("Chess"));
+
+    // create "queen", connect it to chess and queen elizabeth
+    const queen = createNode("Queen");
+    createConnection(queen, nodeMap.get("queen elizabeth"));
+    createConnection(queen, nodeMap.get("Chess"));
 }
 
 // adds new node to the game
