@@ -17,7 +17,7 @@ class Node {
         this.htmlText = null;
         this.visualLinks = [];
         this.visuallyConnected = new Set();
-        this.center = {"x": 0, "y": 0}
+        this.center = null;
     }
 
     /**
@@ -368,27 +368,6 @@ function populateGraph() {
     createConnection(king, nodeMap.get("Chess"));
 }
 
-// compares the provided x,y coordinates to the graph to see if the space is occupied
-function spaceTaken(x, y, name="") {
-    nodeMap.nodes.forEach((node) => {
-        if (node.visible && node.value !== name) {
-            // calculate distance between points
-            let a = x - node.center.x;
-            let b = y - node.center.y;
-            let dist = Math.sqrt(a * a + b * b);
-
-            radius = Math.max(node.width, node.height) + 20; //additional buffer of 20
-
-            if (dist < radius) {
-                return true;
-            }
-        }
-    })
-
-    return false;
-    
-}
-
 // adds new node to the game
 function addNodeToGui(node) {
 
@@ -396,15 +375,7 @@ function addNodeToGui(node) {
     let g = document.createElementNS("http://www.w3.org/2000/svg", "g");
     g.setAttribute("class", node.parent ? "node parent" : "node");
 
-    let x = 270 + Math.random() * (SVG_WIDTH - 520);
-    let y = 270 + Math.random() * (SVG_HEIGHT - 520);
-
-    while (spaceTaken(x, y, node.value)) {
-        x = 270 + Math.random() * (SVG_WIDTH - 520);
-        y = 270 + Math.random() * (SVG_HEIGHT - 520);
-    }
-
-    g.setAttribute("transform", `translate(${x}, ${y})`);
+    g.setAttribute("transform", `translate(${node.center.x}, ${node.center.y})`);
 
     // add sub-components to new svg element
     let title = document.createElementNS("http://www.w3.org/2000/svg", "title");
@@ -416,7 +387,6 @@ function addNodeToGui(node) {
     let text = document.createElementNS("http://www.w3.org/2000/svg", "text");
     text.innerHTML = node.text();
     text.setAttribute("dy", "0.3em");
-    
 
     g.appendChild(title);
     g.append(circle);
@@ -429,17 +399,53 @@ function addNodeToGui(node) {
         onNodeClick(node.value);
     }
 
-    let dimensions = g.getBoundingClientRect();
-
     // update node properties
     node.visible = true;
     node.htmlText = text;
-    node.width = dimensions.width;
-    node.height = dimensions.height;
-    node.center = {
-        "x": x,
-        "y": y
-    }
+}
+
+function spaceTaken(x, y, width, height) {
+    let foundConflict = false;
+    nodeMap.nodes.forEach( (node) => {
+        if (node.center) {
+            let x1 = node.center.x - node.width / 2;
+            let y1 = node.center.y - node.height / 2;
+            let x2 = x - width / 2;
+            let y2 = y - height / 2;
+
+            if (x1 < x2 + width && x1 + node.width > x2  && y1 < y2 + height && y2 < y1 + node.height) {
+                foundConflict = true;
+            }
+        }       
+    });
+    return foundConflict;
+}
+
+// goes through each node and assigns it a position
+function assignPositions() {
+    // first, generate dimensions
+    nodeMap.nodes.forEach( (node) => {
+        // we create a bounding box for each node based on the text width
+        // will not be perfectly accurate, as we don't know the rendered sizes yet
+        node.width = 50 + (Math.max(node.value.length - 3, 0)) * 10;;
+        node.height = 40; // radius of circle is 15
+    });
+
+    // then, assign coordinates
+    nodeMap.nodes.forEach( (node) => {
+        let x = 270 + Math.random() * (SVG_WIDTH - 520);
+        let y = 270 + Math.random() * (SVG_HEIGHT - 520);
+
+        while (spaceTaken(x, y, node.width, node.height)) {
+            x = 270 + Math.random() * (SVG_WIDTH - 520);
+            y = 270 + Math.random() * (SVG_HEIGHT - 520);
+        }
+
+        node.center = {
+            "x": x,
+            "y": y
+        }
+    })
 }
 
 function setup() {
@@ -448,6 +454,8 @@ function setup() {
     gameSvg.setAttribute("height", SVG_HEIGHT);
     
     populateGraph();
+
+    assignPositions();
 
     // do an initial draw of our parent nodes and their edges
     nodeMap.nodes.forEach( (node, key, map) => {
