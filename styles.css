@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500&display=swap');
 
 body {
     font-family: 'Rubik', sans-serif;
@@ -55,8 +55,8 @@ p {
     height: 400px;
     position: absolute;
     margin: auto;
-    top: 30px;
-    right: 30px;
+    top: 25px;
+    right: 25px;
     border-radius: 5px;
     background-color: rgba(48, 48, 54, 0.6);
     padding-left: 20px;
@@ -78,8 +78,8 @@ p {
     height: 400px;
     position: absolute;
     margin: auto;
-    top: 30px;
-    left: 30px;
+    top: 25px;
+    left: 25px;
     border-radius: 5px;
     background-color: rgba(48, 48, 54, 0.6);
     padding: 20px;
@@ -99,7 +99,7 @@ p {
     position: absolute;
     margin: auto;
     top: 500px;
-    left: 30px;
+    left: 25px;
     border-radius: 5px;
     background-color: rgba(48, 48, 54, 0.6);
     padding: 20px;
@@ -117,6 +117,69 @@ p {
     fill: transparent;
 }
 
+#loading {
+    width: max-content;
+    height: 2.5rem;
+    position: absolute;
+    margin: auto;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+}
+
+#loading h1{
+    font-size: 2.5rem;
+    font-weight: 300;
+    margin: 0;
+}
+
 .incorrect {
     
+}
+
+/**
+ * ==============================================
+ * Dot Typing
+ * taken from https://codepen.io/nzbin/pen/GGrXbp
+ * ==============================================
+ */
+.dot-typing {
+  position: relative;
+  margin-top: auto;
+  margin-bottom: 2px;
+  left: -12px;
+  top: 0;
+  width: 4px;
+  height: 4px;
+  background-color: transparent;
+  color: transparent;
+  z-index: -1000;
+  box-shadow: 15px 0 0 0 #000, 25px 0 0 0 #000, 35px 0 0 0 #000;
+  animation: dotTyping 1s infinite linear;
+}
+
+@keyframes dotTyping {
+  0% {
+    box-shadow: 15px 0 0 0 #000, 25px 0 0 0 #000, 35px 0 0 0 #000;
+  }
+  16.667% {
+    box-shadow: 15px -7px 0 0 #000, 25px 0 0 0 #000, 35px 0 0 0 #000;
+  }
+  33.333% {
+    box-shadow: 15px 0 0 0 #000, 25px 0 0 0 #000, 35px 0 0 0 #000;
+  }
+  50% {
+    box-shadow: 15px 0 0 0 #000, 25px -7px 0 0 #000, 35px 0 0 0 #000;
+  }
+  66.667% {
+    box-shadow: 15px 0 0 0 #000, 25px 0 0 0 #000, 35px 0 0 0 #000;
+  }
+  83.333% {
+    box-shadow: 15px 0 0 0 #000, 25px 0 0 0 #000, 35px -7px 0 0 #000;
+  }
+  100% {
+    box-shadow: 15px 0 0 0 #000, 25px 0 0 0 #000, 35px 0 0 0 #000;
+  }
 }

@@ -22,12 +22,17 @@
                 <p>Click on different words to see what they're connected to!</p>
             </div>
             <div id="displayPanel"></div>
-            <svg id="gameSvg" width="600", height="600">
+            <div id="loading">
+                <h1>Generating Graph</h1>
+                <div class="dot-typing"></div>
+            </div>
+            <svg id="gameSvg" width="600" , height="600">
                 <g id="transformLayer">
                     <rect />
                 </g>
             </svg>
         </div>
+        <script src="springy.js"></script>
         <script src="app.js"></script>
     </body>
 </html>

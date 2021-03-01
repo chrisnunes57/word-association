@@ -3,7 +3,7 @@ class Node {
     * @param value: The text to be contained in the node
     * @param edges: A list of references to other nodes
     */
-    constructor(value, edges=[]) {
+    constructor(value, edges = []) {
         this.value = value;
         this.placeholder = this.getPlaceholder(value);
         this.title = this.getTitle(value);
@@ -17,7 +17,10 @@ class Node {
         this.htmlText = null;
         this.visualLinks = [];
         this.visuallyConnected = new Set();
-        this.center = null;
+        this.center = {
+            'x': 100,
+            'y': 100
+        };
     }
 
     /**
@@ -48,7 +51,7 @@ class Node {
     */
     getTitle(value) {
         let tokens = value.split(" ");
-        tokens = tokens.map( (tok) => {
+        tokens = tokens.map((tok) => {
             return tok.length;
         });
 
@@ -105,9 +108,10 @@ const gameSvg = document.getElementById("gameSvg");
 const displayPanel = document.getElementById("displayPanel");
 const guessPanel = document.getElementById("guessPanelWrapper");
 const transformLayer = document.getElementById("transformLayer");
+const loadingText = document.getElementById("loading");
 
-const SVG_WIDTH = window.innerWidth;
-const SVG_HEIGHT = window.innerHeight;
+const SVG_WIDTH = window.innerWidth * 1;
+const SVG_HEIGHT = window.innerHeight * 1;
 const CIRCLE_RADIUS = 15;
 
 // this will store any node that is currently clicked/selected
@@ -116,10 +120,18 @@ let currentNode = null;
 // this will store all strings, with references to their respective nodes
 const nodeMap = new NodeMap();
 
+// this will store our nodes in a graph format, for drawing
+const graph = new Springy.Graph();
+
+// will map strings to their Springy nodes
+const springyMap = {};
+
+
 // get our transform layer ready for dragging and scaling
 transformLayer.x = 0;
 transformLayer.y = 0;
 transformLayer.scale = 1;
+transformLayer.setAttribute("transform", `translate(${transformLayer.x},${transformLayer.y}) scale(${transformLayer.scale})`);
 
 // LISTENERS
 // setting up document listeners here
@@ -202,7 +214,7 @@ function deselectNode(node) {
 }
 
 // highlight links and update the display pane
-function selectNode(node) {    
+function selectNode(node) {
     if (node === null) return;
     // update display panel title
     let title = document.createElement("p");
@@ -211,7 +223,7 @@ function selectNode(node) {
     displayPanel.appendChild(title);
 
     // update display panel subitems
-    node.edges.forEach( (edge) => {
+    node.edges.forEach((edge) => {
         if (edge.visible) {
             let subitem = document.createElement("p");
             subitem.innerText = edge.text();
@@ -258,7 +270,7 @@ function submitGuess(guess) {
     if (guessPanel.childElementCount === 10) {
         guessPanel.removeChild(guessPanel.lastElementChild);
     }
-    
+
     guessPanel.prepend(p);
 }
 
@@ -277,13 +289,15 @@ function revealNode(node) {
 }
 
 // creates and returns node, plus handles the overhead of adding to nodeMap
-function createNode(text, parent=false, edges=[]) {
+function createNode(text, parent = false, edges = []) {
     const n = new Node(text);
+    n.startingNode = parent;
     n.parent = parent;
-    n.found = n.parent;
-    n.visible = n.parent;
+    n.found = parent;
+    n.visible = parent;
 
     nodeMap.add(n);
+    springyMap[text] = graph.newNode({ label: text });
     return n;
 }
 
@@ -294,6 +308,10 @@ function createConnection(node1, node2) {
     // create the data structure connnection
     node1.addConnection(node2);
     node2.addConnection(node1);
+
+    const n1 = springyMap[node1.value];
+    const n2 = springyMap[node2.value];
+    graph.newEdge(n1, n2)
 }
 
 // draws a visual connection between two nodes
@@ -315,77 +333,25 @@ function addConnectionToGui(node1, node2) {
 }
 
 // populates the graph with nodes
-function populateGraph() {
-    // generate one main node
-    const mainNode = createNode("Pixar Animations", true);
-    mainNode.startingNode = true;
+async function populateGraph() {
+    // reads json file 
+    // TODO: read localstorage to see if game exists already
+    const response = await fetch("/data.json");
+    const data = await response.json();
 
-    // generate another main node
-    const elizabethNode = createNode("Elizabeth", true)
-    elizabethNode.startingNode = true;
-
-    // add children of elizabeth node
-    const elizabethChildren = ["Elizabeth Warren", "Lana Del Rey", "Queen Elizabeth", "Elizabeth Swann", "Beth Harmon"];
-    elizabethChildren.forEach((child) => {
-        const n = createNode(child);
-        createConnection(n, elizabethNode);
+    // create nodes
+    data['nodes'].forEach(node => {
+        const parent = data['starting'].includes(node['name']);
+        createNode(node['name'], parent);
     });
 
-    // add children of main node
-    const children = ["Bao", "Coco", "Finding Nemo", "Inside Out", "The Blue Umbrella"];
-    children.forEach((child) => {
-        const n = createNode(child);
-        createConnection(n, mainNode);
+    // create links
+    data['links'].forEach(link => {
+        const n1 = nodeMap.get(link['source']);
+        const n2 = nodeMap.get(link['target']);
+        createConnection(n1, n2);
     });
 
-    // add some children of the 'Coco' node
-    const cocoChildren = ["Cocoa", "Chanel"];
-    const c = nodeMap.get("Coco");
-    cocoChildren.forEach((child) => {
-        const n = createNode(child);
-        createConnection(n, c);
-    });
-
-    // add some children of the 'Bao' node
-    const baoChildren = ["Board Games", "Bow"];
-    const b = nodeMap.get("bao");
-    baoChildren.forEach((child) => {
-        const n = createNode(child);
-        createConnection(n, b);
-    });
-
-    // add some children of the 'Bao' node
-    const umbrellaChildren = ["Umbrella", "Blue"];
-    const u = nodeMap.get("the blue umbrella");
-    umbrellaChildren.forEach((child) => {
-        const n = createNode(child);
-        createConnection(n, u);
-    });
-
-    // add a chess linnk between "boardgames" and "beth harmon"
-    const chess = createNode("Chess");
-    createConnection(chess, nodeMap.get("Board Games"));
-    createConnection(chess, nodeMap.get("Beth Harmon"));
-
-    // make board games a parent and give it other children
-    // add some children of the 'Bao' node
-    const boardGameChildren = ["Hey, That's My Fish!", "Backgammon", "Catan", "Bananagrams", "Ticket to Ride"];
-    const bg = nodeMap.get("board games");
-    bg.parent = true;
-    boardGameChildren.forEach((child) => {
-        const n = createNode(child);
-        createConnection(n, bg);
-    });
-
-    // create a king, connect it to chess and lana del rey
-    const king = createNode("King");
-    createConnection(king, nodeMap.get("lana del rey"));
-    createConnection(king, nodeMap.get("Chess"));
-
-    // create "queen", connect it to chess and queen elizabeth
-    const queen = createNode("Queen");
-    createConnection(queen, nodeMap.get("queen elizabeth"));
-    createConnection(queen, nodeMap.get("Chess"));
 }
 
 // adds new node to the game
@@ -426,69 +392,83 @@ function addNodeToGui(node) {
 
 function spaceTaken(x, y, width, height) {
     let foundConflict = false;
-    nodeMap.nodes.forEach( (node) => {
+    nodeMap.nodes.forEach((node) => {
         if (node.center) {
             let x1 = node.center.x - node.width / 2;
             let y1 = node.center.y - node.height / 2;
             let x2 = x - width / 2;
             let y2 = y - height / 2;
 
-            if (x1 < x2 + width && x1 + node.width > x2  && y1 < y2 + height && y2 < y1 + node.height) {
+            if (x1 < x2 + width && x1 + node.width > x2 && y1 < y2 + height && y2 < y1 + node.height) {
                 foundConflict = true;
             }
-        }       
+        }
     });
     return foundConflict;
 }
 
 // goes through each node and assigns it a position
+// uses Springy library
 function assignPositions() {
-    // first, generate dimensions
-    nodeMap.nodes.forEach( (node) => {
-        // we create a bounding box for each node based on the text width
-        // will not be perfectly accurate, as we don't know the rendered sizes yet
-        node.width = 50 + (Math.max(node.value.length - 3, 0)) * 10;;
-        node.height = 40; // radius of circle is 15
-    });
+    const layout = new Springy.Layout.ForceDirected(
+        graph,
+        600.0, // Spring stiffness
+        100.0, // Node repulsion
+        0.5, // Damping
+        10, // min energy to stop
+    );
 
-    // then, assign coordinates
-    nodeMap.nodes.forEach( (node) => {
-        let x = 270 + Math.random() * (SVG_WIDTH - 520);
-        let y = 270 + Math.random() * (SVG_HEIGHT - 520);
+    const toScreen = function (p) {
+        let currentBB = layout.getBoundingBox();
+        var size = currentBB.topright.subtract(currentBB.bottomleft);
+        var sx = p.subtract(currentBB.bottomleft).divide(size.x).x * SVG_WIDTH;
+        var sy = p.subtract(currentBB.bottomleft).divide(size.y).y * SVG_HEIGHT;
+        return new Springy.Vector(sx, sy);
+    };
 
-        while (spaceTaken(x, y, node.width, node.height)) {
-            x = 270 + Math.random() * (SVG_WIDTH - 520);
-            y = 270 + Math.random() * (SVG_HEIGHT - 520);
+    const renderer = new Springy.Renderer(
+        layout,
+        function clear() {
+            // code to clear screen
+            transformLayer.innerHTML = `<rect />`;
+        },
+        function drawEdge(edge, p1, p2) {
+            // draw an edge
+            return;
+        },
+        function drawNode(node, p) {
+            // draw a node
+            const n = nodeMap.get(node.data.label);
+            const coords = toScreen(p);
+            n.center = {
+                "x": coords.x,
+                "y": coords.y
+            }
+        }, function onRenderStop() {
+            nodeMap.nodes.forEach(n => {
+                if (n.startingNode) {
+                    // add node and children
+                    addNodeToGui(n);
+                    n.edges.forEach((edge) => {
+                        addNodeToGui(edge);
+                        // connect node and child
+                        addConnectionToGui(n, edge);
+                    });
+                }
+            });
+            loadingText.style.display = "none";
         }
-
-        node.center = {
-            "x": x,
-            "y": y
-        }
-    });
+    );
 }
 
 function setup() {
 
     gameSvg.setAttribute("width", SVG_WIDTH);
     gameSvg.setAttribute("height", SVG_HEIGHT);
-    
+
     populateGraph();
 
     assignPositions();
-
-    // do an initial draw of our parent nodes and their edges
-    nodeMap.nodes.forEach( (node, key, map) => {
-        if (node.startingNode) {
-            // add node and children
-            addNodeToGui(node);
-            node.edges.forEach( (edge) => {
-                addNodeToGui(edge);
-                // connect node and child
-                addConnectionToGui(node, edge);
-            });
-        }
-    })
 }
 
 // BEGIN
