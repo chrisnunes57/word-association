@@ -110,8 +110,8 @@ const guessPanel = document.getElementById("guessPanelWrapper");
 const transformLayer = document.getElementById("transformLayer");
 const loadingText = document.getElementById("loading");
 
-const SVG_WIDTH = window.innerWidth * 1;
-const SVG_HEIGHT = window.innerHeight * 1;
+const SVG_WIDTH = window.innerWidth * 1.3;
+const SVG_HEIGHT = window.innerHeight * 1.3;
 const CIRCLE_RADIUS = 15;
 
 // this will store any node that is currently clicked/selected
@@ -414,9 +414,9 @@ function assignPositions() {
     const layout = new Springy.Layout.ForceDirected(
         graph,
         600.0, // Spring stiffness
-        500.0, // Node repulsion
+        100.0, // Node repulsion
         0.5, // Damping
-        10, // min energy to stop
+        6
     );
 
     const toScreen = function (p) {
