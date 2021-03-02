@@ -289,12 +289,12 @@ function revealNode(node) {
 }
 
 // creates and returns node, plus handles the overhead of adding to nodeMap
-function createNode(text, parent = false, edges = []) {
+function createNode(text, parent = false, starter=false, edges = []) {
     const n = new Node(text);
-    n.startingNode = parent;
-    n.parent = parent;
-    n.found = parent;
-    n.visible = parent;
+    n.startingNode = starter;
+    n.parent = parent || starter;
+    n.found = starter;
+    n.visible = starter;
 
     nodeMap.add(n);
     springyMap[text] = graph.newNode({ label: text });
@@ -341,8 +341,9 @@ async function populateGraph() {
 
     // create nodes
     data['nodes'].forEach(node => {
-        const parent = data['starting'].includes(node['name']);
-        createNode(node['name'], parent);
+        const starter = data['starting'].includes(node['name']);
+        const parent = data['parents'].includes(node['name']);
+        createNode(node['name'], parent, starter);
     });
 
     // create links
@@ -413,7 +414,7 @@ function assignPositions() {
     const layout = new Springy.Layout.ForceDirected(
         graph,
         600.0, // Spring stiffness
-        100.0, // Node repulsion
+        500.0, // Node repulsion
         0.5, // Damping
         10, // min energy to stop
     );
